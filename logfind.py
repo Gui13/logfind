@@ -30,23 +30,30 @@ def find_words_in_file(filename, words, match_one):
             return True
     return False
 
-if __name__ == '__main__':
-    args = parser.parse_args()
-
+def read_prefs(pref_file):
+    '''Returns the array of files that the specified file describes, in a line-by-line regexp.'''
     files = []
 
-    try:
-        # read prefs file and build list of files
-        prefs = open(os.path.expanduser(pref_file), 'r')
+    with open(os.path.expanduser(pref_file), 'r') as prefs:
         for line in prefs:
             line = os.path.expanduser(line)
             line = os.path.expandvars(line)
             files += [f for f in glob.glob(line) if os.path.isfile(f)]
 
-        for f in files:
-            if find_words_in_file(f, args.patterns, args.or_operator):
-                print('{filename}'.format(filename=f))
+    return files
 
+if __name__ == '__main__':
+    args = parser.parse_args()
+
+    try:
+        # read prefs file and build list of files
+        files = read_prefs(pref_file)
+        patterns = args.patterns
+        match_one = args.or_operator
+
+        for f in files:
+            if find_words_in_file(f, patterns, match_one):
+                print('{filename}'.format(filename=f))
 
     except FileNotFoundError as e:
         print('The file {pref} was not found. logfind will not search anywhere. Please create this file and specify the list of files to search in it.'.format(pref=pref_file))
