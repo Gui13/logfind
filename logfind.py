@@ -11,7 +11,7 @@ pref_file = '~/.logfind'
 parser = argparse.ArgumentParser(prog='logfind', description='Finds things in logs. You should specify the list of files to consider in the ~/.logfind file (regexps allowed).')
 parser.add_argument('patterns', metavar='PATTERN', type=str, nargs='+',
                     help='''The list of words to search for. All words should be found for the logfile to match.''')
-parser.add_argument('-o', dest='or_operator', type=bool,
+parser.add_argument('-o', dest='or_operator', type=bool, const=True, default=False, nargs='?',
                     help='''Will change the matcher to match at least one of the words instead of all.''')
 
 
@@ -24,9 +24,11 @@ def find_words_in_file(filename, words, match_one):
                 if word in line:
                     found_words += 1
                     if match_one:
-                        break
-        if found_words == len(words) or (found_words != 0 and match_one):
-            print('{filename}'.format(filename=filename))
+                        return True
+
+        if found_words == len(words):
+            return True
+    return False
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -42,7 +44,9 @@ if __name__ == '__main__':
             files += [f for f in glob.glob(line) if os.path.isfile(f)]
 
         for f in files:
-            find_words_in_file(f, args.patterns, args.or_operator)
+            if find_words_in_file(f, args.patterns, args.or_operator):
+                print('{filename}'.format(filename=f))
+
 
     except FileNotFoundError as e:
         print('The file {pref} was not found. logfind will not search anywhere. Please create this file and specify the list of files to search in it.'.format(pref=pref_file))
